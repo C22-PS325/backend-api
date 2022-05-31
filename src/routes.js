@@ -1,24 +1,42 @@
 const {
-  registerPatient,
-  loginPatient,
-  logoutPatient,
+  registerPatientHandler,
+  loginPatientHandler,
+  logoutPatientHandler,
+  registerDoctorHandler,
+  loginDoctorHandler,
+  logoutDoctorHandler,
 } = require('./handler');
 
 const routes = [
   {
     method: 'POST',
     path: '/register/patient',
-    handler: registerPatient,
+    handler: registerPatientHandler,
   },
   {
     method: 'POST',
     path: '/login/patient',
-    handler: loginPatient,
+    handler: loginPatientHandler,
   },
   {
     method: 'POST',
     path: '/logout/patient',
-    handler: logoutPatient,
+    handler: logoutPatientHandler,
+  },
+  {
+    method: 'POST',
+    path: '/register/doctor',
+    handler: registerDoctorHandler,
+  },
+  {
+    method: 'POST',
+    path: '/login/doctor',
+    handler: loginDoctorHandler,
+  },
+  {
+    method: 'POST',
+    path: '/logout/doctor',
+    handler: logoutDoctorHandler,
   },
 ];
 
