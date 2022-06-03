@@ -1,77 +1,78 @@
+require('dotenv').config();
+
+const jwt = require('jsonwebtoken');
 const { startConnection } = require('./db-conn');
+const { validateUser, validateToken } = require('./validation');
 
-const registerPatientHandler = async (request, h) => {
-  const { username, password } = request.payload;
-  const query = `INSERT INTO patient (username, password) VALUES ("${username}", "${password}")`;
+const patientRegisterHandler = async (request, h) => {
+  const {
+    username,
+    password,
+    phone,
+    email,
+    address,
+  } = request.payload;
 
-  const conn = await startConnection();
-  await conn.query(query);
-  await conn.end();
+  const query = `INSERT INTO patients (username, password, phone, email, address) 
+  VALUES ("${username}", "${password}", "${phone}", "${email}", "${address}")`;
+
+  try {
+    const conn = await startConnection();
+    await conn.query(query);
+    await conn.end();
+  } catch (error) {
+    const response = h.response({
+      status: 'Failed',
+      message: 'Something is wrong',
+    });
+
+    response.code(500);
+    return response;
+  }
 
   const response = h.response({
-    status: 'success',
-    message: 'user registered',
+    status: 'Success',
+    message: 'User registered',
     data: {
       username,
     },
   });
 
-  response.code(200);
+  response.code(201);
   return response;
 };
 
-const loginPatientHandler = async (request, h) => {
+const patientLoginHandler = async (request, h) => {
   const { username, password } = request.payload;
+  const userValid = validateUser(username, password, 'patients');
 
-  const conn = await startConnection();
-  const result = await conn.query('SELECT password FROM patient WHERE username = ?', [username]);
-  conn.end();
+  if (userValid) {
+    const user = { username };
 
-  const querriedPassword = result[0][0].password;
-  if (password === querriedPassword) {
-    const token = '123456';
+    const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
+    const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET);
 
-    const conn2 = await startConnection();
-    await conn2.query('UPDATE patient SET token = ? WHERE username = ?', [token, username]);
-    conn2.end();
+    try {
+      const query = `INSERT INTO refreshtoken VALUES ("${refreshToken}")`;
+      const conn = await startConnection();
+      await conn.query(query);
+      await conn.end();
+    } catch (error) {
+      const response = h.response({
+        status: 'Failed',
+        message: 'Something is wrong',
+      });
 
-    const response = h.response({
-      status: 'success',
-      message: 'user logged in',
-      data: {
-        username,
-        token,
-      },
-    });
-    response.code(200);
-    return response;
-  }
-
-  const response = h.response({
-    status: 'failed',
-  });
-  response.code(500);
-  return response;
-};
-
-const logoutPatientHandler = async (request, h) => {
-  const { username, token } = request.payload;
-
-  const conn = await startConnection();
-  const result = await conn.query('SELECT token FROM patient WHERE username = ?', [username]);
-  await conn.end();
-
-  const querriedToken = result[0][0].token;
-  if (token === querriedToken) {
-    const conn2 = await startConnection();
-    await conn2.query('UPDATE patient SET token = "" WHERE username = ?', [username]);
-    conn2.end();
+      response.code(500);
+      return response;
+    }
 
     const response = h.response({
-      status: 'success',
-      message: 'user logged out',
+      status: 'Success',
+      message: 'User authenticated',
       data: {
-        username,
+        accessToken,
+        refreshToken,
       },
     });
 
@@ -80,105 +81,259 @@ const logoutPatientHandler = async (request, h) => {
   }
 
   const response = h.response({
-    status: 'failed',
+    status: 'Forbidden',
+    message: 'You don\'t have permission',
   });
 
-  response.code(500);
+  response.code(403);
   return response;
 };
 
-const registerDoctorHandler = async (request, h) => {
-  const { username, password } = request.payload;
-  const query = `INSERT INTO doctor (username, password) VALUES ("${username}", "${password}")`;
+const patientLogoutHandler = async (request, h) => {
+  const refreshToken = request.payload.token;
 
-  const conn = await startConnection();
-  await conn.query(query);
-  await conn.end();
+  try {
+    const query = `DELETE FROM refreshtoken WHERE token="${refreshToken}"`;
+    const conn = await startConnection();
+    await conn.query(query);
+    await conn.end();
+
+    const response = h.response({
+      status: 'Success',
+      message: 'User logged out',
+    });
+
+    response.code(204);
+    return response;
+  } catch (error) {
+    const response = h.response({
+      status: 'Failed',
+      message: 'Something is wrong',
+    });
+
+    response.code(500);
+    return response;
+  }
+};
+
+const doctorRegisterHandler = async (request, h) => {
+  const {
+    username,
+    password,
+    phone,
+    email,
+    address,
+  } = request.payload;
+
+  const query = `INSERT INTO doctors (username, password, phone, email, address) 
+  VALUES ("${username}", "${password}", "${phone}", "${email}", "${address}")`;
+
+  try {
+    const conn = await startConnection();
+    await conn.query(query);
+    await conn.end();
+  } catch (error) {
+    const response = h.response({
+      status: 'Failed',
+      message: 'Something is wrong',
+    });
+
+    response.code(500);
+    return response;
+  }
 
   const response = h.response({
-    status: 'success',
-    message: 'user registered',
+    status: 'Success',
+    message: 'User registered',
     data: {
       username,
     },
   });
 
-  response.code(200);
+  response.code(201);
   return response;
 };
 
-const loginDoctorHandler = async (request, h) => {
+const doctorLoginHandler = async (request, h) => {
   const { username, password } = request.payload;
+  const userValid = validateUser(username, password, 'doctors');
 
-  const conn = await startConnection();
-  const result = await conn.query('SELECT password FROM doctor WHERE username = ?', [username]);
-  conn.end();
+  if (userValid) {
+    const user = { username };
 
-  const querriedPassword = result[0][0].password;
-  if (password === querriedPassword) {
-    const token = '123456';
+    const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
+    const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET);
 
-    const conn2 = await startConnection();
-    await conn2.query('UPDATE doctor SET token = ? WHERE username = ?', [token, username]);
-    conn2.end();
+    try {
+      const query = `INSERT INTO refreshtoken VALUES ("${refreshToken}")`;
+      const conn = await startConnection();
+      await conn.query(query);
+      await conn.end();
+    } catch (error) {
+      const response = h.response({
+        status: 'Failed',
+        message: 'Something is wrong',
+      });
+
+      response.code(500);
+      return response;
+    }
 
     const response = h.response({
-      status: 'success',
-      message: 'user logged in',
+      status: 'Success',
+      message: 'User authenticated',
       data: {
-        username,
-        token,
+        accessToken,
+        refreshToken,
       },
     });
+
     response.code(200);
     return response;
   }
-
   const response = h.response({
-    status: 'failed',
+    status: 'Forbidden',
+    message: 'You don\'t have permission',
   });
-  response.code(500);
+
+  response.code(403);
   return response;
 };
 
-const logoutDoctorHandler = async (request, h) => {
-  const { username, token } = request.payload;
+const doctorLogoutHandler = async (request, h) => {
+  const refreshToken = request.payload.token;
 
-  const conn = await startConnection();
-  const result = await conn.query('SELECT token FROM doctor WHERE username = ?', [username]);
-  await conn.end();
-
-  const querriedToken = result[0][0].token;
-  if (token === querriedToken) {
-    const conn2 = await startConnection();
-    await conn2.query('UPDATE doctor SET token = "" WHERE username = ?', [username]);
-    conn2.end();
+  try {
+    const query = `DELETE FROM refreshtoken WHERE token="${refreshToken}"`;
+    const conn = await startConnection();
+    await conn.query(query);
+    await conn.end();
 
     const response = h.response({
-      status: 'success',
-      message: 'user logged out',
-      data: {
-        username,
-      },
+      status: 'Success',
+      message: 'User logged out',
     });
+
+    response.code(204);
+    return response;
+  } catch (error) {
+    const response = h.response({
+      status: 'Failed',
+      message: 'Something is wrong',
+    });
+
+    response.code(500);
+    return response;
+  }
+};
+
+const tokenRefreshHandler = async (request, h) => {
+  const refreshToken = request.payload.token;
+
+  if (refreshToken === null) {
+    const response = h.response({});
+
+    response.code(401);
+    return response;
+  }
+
+  try {
+    const query = `SELECT EXISTS(SELECT * FROM refreshtoken WHERE token="${refreshToken}")`;
+    const conn = await startConnection();
+    const result = await conn.query(query);
+    await conn.end();
+
+    if (result[0][0].refreshToken === 1) {
+      jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
+        if (err) {
+          const response = h.response({
+            status: 'Forbidden',
+            message: 'You don\'t have permission',
+          });
+
+          response.code(403);
+          return response;
+        }
+
+        const accessToken = jwt.sign({ username: user.username }, process.env.ACCESS_TOKEN_SECRET);
+
+        const response = h.response({
+          status: 'Success',
+          message: 'User authenticated',
+          data: {
+            accessToken,
+          },
+        });
+
+        response.code(200);
+        return response;
+      });
+    }
+
+    const response = h.response({
+      status: 'Forbidden',
+      message: 'You don\'t have permission',
+    });
+
+    response.code(403);
+    return response;
+  } catch (error) {
+    const response = h.response({
+      status: 'Failed',
+      message: 'Something is wrong',
+    });
+
+    response.code(500);
+    return response;
+  }
+};
+
+const imagePredictHandler = (request, h) => {
+  const authHeader = request.headers.authorization;
+
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token === null) {
+    const response = h.response({
+      status: 'Unauthorized',
+      message: 'No credentials',
+    });
+
+    response.code(401);
+    return response;
+  }
+
+  if (validateToken(token)) {
+    const response = h.response({});
 
     response.code(200);
     return response;
   }
 
   const response = h.response({
-    status: 'failed',
+    status: 'Forbidden',
+    message: 'You don\'t have permission',
   });
 
-  response.code(500);
+  response.code(403);
+  return response;
+};
+
+const audioPredictHandler = (request, h) => {
+  const response = h.response({});
+
+  response.code(200);
   return response;
 };
 
 module.exports = {
-  registerPatientHandler,
-  loginPatientHandler,
-  logoutPatientHandler,
-  registerDoctorHandler,
-  loginDoctorHandler,
-  logoutDoctorHandler,
+  patientRegisterHandler,
+  patientLoginHandler,
+  patientLogoutHandler,
+  doctorRegisterHandler,
+  doctorLoginHandler,
+  doctorLogoutHandler,
+  tokenRefreshHandler,
+  imagePredictHandler,
+  audioPredictHandler,
 };

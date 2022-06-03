@@ -11,6 +11,9 @@
   "license": "ISC",
   "dependencies": {
     "@hapi/hapi": "^20.2.2",
+    "@tensorflow/tfjs": "^3.18.0",
+    "dotenv": "^16.0.1",
+    "jsonwebtoken": "^8.5.1",
     "mysql2": "^2.3.3"
   },
   "devDependencies": {

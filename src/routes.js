@@ -1,42 +1,72 @@
 const {
-  registerPatientHandler,
-  loginPatientHandler,
-  logoutPatientHandler,
-  registerDoctorHandler,
-  loginDoctorHandler,
-  logoutDoctorHandler,
+  patientRegisterHandler,
+  patientLoginHandler,
+  patientLogoutHandler,
+  doctorRegisterHandler,
+  doctorLoginHandler,
+  doctorLogoutHandler,
+  tokenRefreshHandler,
+  imagePredictHandler,
+  audioPredictHandler,
 } = require('./handler');
 
 const routes = [
   {
-    method: 'POST',
-    path: '/register/patient',
-    handler: registerPatientHandler,
+    method: 'GET',
+    path: '/',
+    handler: (request, h) => {
+      const response = h.response({
+        status: 'success',
+      });
+
+      response.code(200);
+      return response;
+    },
   },
   {
     method: 'POST',
-    path: '/login/patient',
-    handler: loginPatientHandler,
+    path: '/patients/register',
+    handler: patientRegisterHandler,
   },
   {
     method: 'POST',
-    path: '/logout/patient',
-    handler: logoutPatientHandler,
+    path: '/patients/login',
+    handler: patientLoginHandler,
+  },
+  {
+    method: 'DELETE',
+    path: '/patients/logout',
+    handler: patientLogoutHandler,
   },
   {
     method: 'POST',
-    path: '/register/doctor',
-    handler: registerDoctorHandler,
+    path: '/doctors/register',
+    handler: doctorRegisterHandler,
   },
   {
     method: 'POST',
-    path: '/login/doctor',
-    handler: loginDoctorHandler,
+    path: '/doctors/login',
+    handler: doctorLoginHandler,
+  },
+  {
+    method: 'DELETE',
+    path: '/doctors/logout',
+    handler: doctorLogoutHandler,
   },
   {
     method: 'POST',
-    path: '/logout/doctor',
-    handler: logoutDoctorHandler,
+    path: '/token/refresh',
+    handler: tokenRefreshHandler,
+  },
+  {
+    method: 'POST',
+    path: '/image/predict',
+    handler: imagePredictHandler,
+  },
+  {
+    method: 'POST',
+    path: '/audio/predict',
+    handler: audioPredictHandler,
   },
 ];
 
