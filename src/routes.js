@@ -61,7 +61,14 @@ const routes = [
   {
     method: 'POST',
     path: '/image/predict',
-    handler: imagePredictHandler,
+    config: {
+      payload: {
+        maxBytes: 209715200,
+        output: 'stream',
+        parse: true,
+      },
+      handler: imagePredictHandler,
+    },
   },
   {
     method: 'POST',

@@ -1,20 +1,23 @@
 require('dotenv').config();
 
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
 const { startConnection } = require('./db-conn');
 const { validateUser, validateToken } = require('./validation');
+//  const { getPredictions } = require('./image-predicts');
 
 const patientRegisterHandler = async (request, h) => {
   const {
     username,
+    name,
     password,
     phone,
     email,
     address,
   } = request.payload;
 
-  const query = `INSERT INTO patients (username, password, phone, email, address) 
-  VALUES ("${username}", "${password}", "${phone}", "${email}", "${address}")`;
+  const query = `INSERT INTO patients (username, name, password, phone, email, address) 
+  VALUES ("${username}", "${name}","${password}", "${phone}", "${email}", "${address}")`;
 
   try {
     const conn = await startConnection();
@@ -44,7 +47,7 @@ const patientRegisterHandler = async (request, h) => {
 
 const patientLoginHandler = async (request, h) => {
   const { username, password } = request.payload;
-  const userValid = validateUser(username, password, 'patients');
+  const userValid = await validateUser(username, password, 'patients');
 
   if (userValid) {
     const user = { username };
@@ -90,7 +93,7 @@ const patientLoginHandler = async (request, h) => {
 };
 
 const patientLogoutHandler = async (request, h) => {
-  const refreshToken = request.payload.token;
+  const { refreshToken } = request.payload;
 
   try {
     const query = `DELETE FROM refreshtoken WHERE token="${refreshToken}"`;
@@ -98,11 +101,7 @@ const patientLogoutHandler = async (request, h) => {
     await conn.query(query);
     await conn.end();
 
-    const response = h.response({
-      status: 'Success',
-      message: 'User logged out',
-    });
-
+    const response = h.response({});
     response.code(204);
     return response;
   } catch (error) {
@@ -119,14 +118,15 @@ const patientLogoutHandler = async (request, h) => {
 const doctorRegisterHandler = async (request, h) => {
   const {
     username,
+    name,
     password,
     phone,
     email,
     address,
   } = request.payload;
 
-  const query = `INSERT INTO doctors (username, password, phone, email, address) 
-  VALUES ("${username}", "${password}", "${phone}", "${email}", "${address}")`;
+  const query = `INSERT INTO doctors (username, name, password, phone, email, address) 
+  VALUES ("${username}", "${name}", "${password}", "${phone}", "${email}", "${address}")`;
 
   try {
     const conn = await startConnection();
@@ -156,7 +156,7 @@ const doctorRegisterHandler = async (request, h) => {
 
 const doctorLoginHandler = async (request, h) => {
   const { username, password } = request.payload;
-  const userValid = validateUser(username, password, 'doctors');
+  const userValid = await validateUser(username, password, 'doctors');
 
   if (userValid) {
     const user = { username };
@@ -201,7 +201,7 @@ const doctorLoginHandler = async (request, h) => {
 };
 
 const doctorLogoutHandler = async (request, h) => {
-  const refreshToken = request.payload.token;
+  const { refreshToken } = request.payload;
 
   try {
     const query = `DELETE FROM refreshtoken WHERE token="${refreshToken}"`;
@@ -209,11 +209,7 @@ const doctorLogoutHandler = async (request, h) => {
     await conn.query(query);
     await conn.end();
 
-    const response = h.response({
-      status: 'Success',
-      message: 'User logged out',
-    });
-
+    const response = h.response({});
     response.code(204);
     return response;
   } catch (error) {
@@ -228,67 +224,49 @@ const doctorLogoutHandler = async (request, h) => {
 };
 
 const tokenRefreshHandler = async (request, h) => {
-  const refreshToken = request.payload.token;
+  const { refreshToken } = request.payload;
 
-  if (refreshToken === null) {
-    const response = h.response({});
-
+  if (refreshToken === undefined || refreshToken === '') {
+    const response = h.response({
+      status: 'Forbidden',
+      message: 'No credentials',
+    });
     response.code(401);
     return response;
   }
 
+  const query = `SELECT EXISTS(SELECT token FROM refreshtoken WHERE token = "${refreshToken}") AS exist`;
+  const conn = await startConnection();
+  const result = await conn.query(query);
+  await conn.end();
+
+  let refreshTokenVerified = '';
   try {
-    const query = `SELECT EXISTS(SELECT * FROM refreshtoken WHERE token="${refreshToken}")`;
-    const conn = await startConnection();
-    const result = await conn.query(query);
-    await conn.end();
+    const tokenExist = result[0][0].exist === 1;
+    if (!tokenExist) throw Error;
 
-    if (result[0][0].refreshToken === 1) {
-      jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
-        if (err) {
-          const response = h.response({
-            status: 'Forbidden',
-            message: 'You don\'t have permission',
-          });
-
-          response.code(403);
-          return response;
-        }
-
-        const accessToken = jwt.sign({ username: user.username }, process.env.ACCESS_TOKEN_SECRET);
-
-        const response = h.response({
-          status: 'Success',
-          message: 'User authenticated',
-          data: {
-            accessToken,
-          },
-        });
-
-        response.code(200);
-        return response;
-      });
-    }
-
+    refreshTokenVerified = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+  } catch (error) {
     const response = h.response({
       status: 'Forbidden',
       message: 'You don\'t have permission',
     });
-
     response.code(403);
     return response;
-  } catch (error) {
-    const response = h.response({
-      status: 'Failed',
-      message: 'Something is wrong',
-    });
-
-    response.code(500);
-    return response;
   }
+
+  const user = { username: refreshTokenVerified.username };
+  const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
+
+  const response = h.response({
+    accessToken,
+  });
+  response.code(200);
+  return response;
 };
 
-const imagePredictHandler = (request, h) => {
+const imagePredictHandler = async (request, h) => {
+  //  Authorization Bearer TOKEN
   const authHeader = request.headers.authorization;
 
   const token = authHeader && authHeader.split(' ')[1];
@@ -304,7 +282,18 @@ const imagePredictHandler = (request, h) => {
   }
 
   if (validateToken(token)) {
-    const response = h.response({});
+    const fileName = 'lol';
+    const fileDir = `images\\${fileName}`;
+    request.payload.image.pipe(fs.createWriteStream(fileDir));
+
+    //  const imageBuffer = fs.readFileSync(fileDir);
+
+    //  const prediction = getPredictions(imageBuffer);
+
+    const response = h.response({
+      // prediction,
+      status: 'Uploaded',
+    });
 
     response.code(200);
     return response;
