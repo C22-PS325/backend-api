@@ -8,6 +8,7 @@ const validateUser = async (username, password, role) => {
     const query = `SELECT password FROM ${role} WHERE username = "${username}"`;
     const conn = await startConnection();
     const result = await conn.query(query);
+
     await conn.end();
 
     const querriedPassword = result[0][0].password;
