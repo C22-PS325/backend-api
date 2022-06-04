@@ -271,30 +271,27 @@ const imagePredictHandler = async (request, h) => {
 
   const token = authHeader && authHeader.split(' ')[1];
 
-  if (token === null) {
+  if (token === undefined) {
     const response = h.response({
-      status: 'Unauthorized',
+      status: 'Forbidden',
       message: 'No credentials',
     });
-
     response.code(401);
     return response;
   }
 
-  if (validateToken(token)) {
-    const fileName = 'lol';
-    const fileDir = `images\\${fileName}`;
-    request.payload.image.pipe(fs.createWriteStream(fileDir));
+  const tokenValid = validateToken(token);
 
-    //  const imageBuffer = fs.readFileSync(fileDir);
-
-    //  const prediction = getPredictions(imageBuffer);
+  if (tokenValid) {
+    const date = Date.now();
+    const name = jwt.decode(token).username;
+    const fileName = `${name} ${date}.jpg`;
+    const fileDir = `images/${fileName}`;
+    request.payload.pipe(fs.createWriteStream(fileDir));
 
     const response = h.response({
-      // prediction,
-      status: 'Uploaded',
+      fileDir,
     });
-
     response.code(200);
     return response;
   }
@@ -303,15 +300,45 @@ const imagePredictHandler = async (request, h) => {
     status: 'Forbidden',
     message: 'You don\'t have permission',
   });
-
   response.code(403);
   return response;
 };
 
 const audioPredictHandler = (request, h) => {
-  const response = h.response({});
+  const authHeader = request.headers.authorization;
 
-  response.code(200);
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token === undefined) {
+    const response = h.response({
+      status: 'Forbidden',
+      message: 'No credentials',
+    });
+    response.code(401);
+    return response;
+  }
+
+  const tokenValid = validateToken(token);
+
+  if (tokenValid) {
+    const date = Date.now();
+    const name = jwt.decode(token).username;
+    const fileName = `${name} ${date}.mp3`;
+    const fileDir = `audio/${fileName}`;
+    request.payload.pipe(fs.createWriteStream(fileDir));
+
+    const response = h.response({
+      fileDir,
+    });
+    response.code(200);
+    return response;
+  }
+
+  const response = h.response({
+    status: 'Forbidden',
+    message: 'You don\'t have permission',
+  });
+  response.code(403);
   return response;
 };
 

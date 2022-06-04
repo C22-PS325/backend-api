@@ -73,7 +73,14 @@ const routes = [
   {
     method: 'POST',
     path: '/audio/predict',
-    handler: audioPredictHandler,
+    config: {
+      payload: {
+        maxBytes: 209715200,
+        output: 'stream',
+        parse: true,
+      },
+      handler: audioPredictHandler,
+    },
   },
 ];
 
