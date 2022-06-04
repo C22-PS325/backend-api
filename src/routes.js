@@ -60,7 +60,7 @@ const routes = [
   },
   {
     method: 'POST',
-    path: '/image/predict',
+    path: '/images/predict',
     config: {
       payload: {
         maxBytes: 209715200,
