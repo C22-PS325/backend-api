@@ -9,7 +9,7 @@ const initDb = async () => {
   const query = 'CREATE DATABASE siap_pulih;';
   const query2 = 'USE siap_pulih';
   const query3 = 'CREATE TABLE patients (username varchar(100) NOT NULL, name varchar(200), password varchar(200) NOT NULL, phone varchar(20), email varchar(200), address varchar(255), PRIMARY KEY (username));';
-  const query4 = 'CREATE TABLE refreshToken (token varchar(255) NOT NULL, PRIMARY KEY (token));';
+  const query4 = 'CREATE TABLE refreshtoken (token varchar(255) NOT NULL, PRIMARY KEY (token));';
   const query5 = 'CREATE TABLE doctors (username varchar(200) NOT NULL, name varchar(200), password varchar(200) NOT NULL, phone varchar(20), email varchar(200), address varchar(255), PRIMARY KEY (username));';
 
   await conn.query(query);
