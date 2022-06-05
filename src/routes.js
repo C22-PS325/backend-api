@@ -13,7 +13,7 @@ const {
 const routes = [
   {
     method: 'GET',
-    path: '/',
+    path: '/api',
     handler: (request, h) => {
       const response = h.response({
         status: 'success',
@@ -25,42 +25,42 @@ const routes = [
   },
   {
     method: 'POST',
-    path: '/patients/register',
+    path: '/api/patients/register',
     handler: patientRegisterHandler,
   },
   {
     method: 'POST',
-    path: '/patients/login',
+    path: '/api/patients/login',
     handler: patientLoginHandler,
   },
   {
     method: 'DELETE',
-    path: '/patients/logout',
+    path: '/api/patients/logout',
     handler: patientLogoutHandler,
   },
   {
     method: 'POST',
-    path: '/doctors/register',
+    path: '/api/doctors/register',
     handler: doctorRegisterHandler,
   },
   {
     method: 'POST',
-    path: '/doctors/login',
+    path: '/api/doctors/login',
     handler: doctorLoginHandler,
   },
   {
     method: 'DELETE',
-    path: '/doctors/logout',
+    path: '/api/doctors/logout',
     handler: doctorLogoutHandler,
   },
   {
     method: 'POST',
-    path: '/token/refresh',
+    path: '/api/token/refresh',
     handler: tokenRefreshHandler,
   },
   {
     method: 'POST',
-    path: '/images/predict',
+    path: '/api/images/predict',
     config: {
       payload: {
         maxBytes: 209715200,
@@ -72,7 +72,7 @@ const routes = [
   },
   {
     method: 'POST',
-    path: '/audio/predict',
+    path: '/api/audio/predict',
     config: {
       payload: {
         maxBytes: 209715200,

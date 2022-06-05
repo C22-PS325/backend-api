@@ -285,7 +285,7 @@ const imagePredictHandler = async (request, h) => {
   if (tokenValid) {
     const date = Date.now();
     const name = jwt.decode(token).username;
-    const fileName = `${name} ${date}.jpg`;
+    const fileName = `${name}-${date}.jpg`;
     const fileDir = `images/${fileName}`;
     request.payload.pipe(fs.createWriteStream(fileDir));
 
@@ -323,7 +323,7 @@ const audioPredictHandler = (request, h) => {
   if (tokenValid) {
     const date = Date.now();
     const name = jwt.decode(token).username;
-    const fileName = `${name} ${date}.mp3`;
+    const fileName = `${name}-${date}.mp3`;
     const fileDir = `audio/${fileName}`;
     request.payload.pipe(fs.createWriteStream(fileDir));
 
