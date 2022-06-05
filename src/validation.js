@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const { startConnection } = require('./db-conn');
 
 const validateUser = async (username, password, role) => {
@@ -12,7 +13,7 @@ const validateUser = async (username, password, role) => {
     await conn.end();
 
     const querriedPassword = result[0][0].password;
-    if (querriedPassword === password) {
+    if (await bcrypt.compare(password, querriedPassword)) {
       return true;
     }
   } catch (error) {

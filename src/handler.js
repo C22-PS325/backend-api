@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
+const bcrypt = require('bcrypt');
 const { startConnection } = require('./db-conn');
 const { validateUser, validateToken } = require('./validation');
 //  const { getPredictions } = require('./image-predicts');
@@ -16,10 +17,12 @@ const patientRegisterHandler = async (request, h) => {
     address,
   } = request.payload;
 
-  const query = `INSERT INTO patients (username, name, password, phone, email, address) 
-  VALUES ("${username}", "${name}","${password}", "${phone}", "${email}", "${address}")`;
-
   try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const query = `INSERT INTO patients (username, name, password, phone, email, address) 
+    VALUES ("${username}", "${name}","${hashedPassword}", "${phone}", "${email}", "${address}")`;
+
     const conn = await startConnection();
     await conn.query(query);
     await conn.end();
@@ -125,10 +128,12 @@ const doctorRegisterHandler = async (request, h) => {
     address,
   } = request.payload;
 
-  const query = `INSERT INTO doctors (username, name, password, phone, email, address) 
-  VALUES ("${username}", "${name}", "${password}", "${phone}", "${email}", "${address}")`;
-
   try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const query = `INSERT INTO doctors (username, name, password, phone, email, address) 
+    VALUES ("${username}", "${name}", "${hashedPassword}", "${phone}", "${email}", "${address}")`;
+
     const conn = await startConnection();
     await conn.query(query);
     await conn.end();
