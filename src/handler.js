@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
 const { startConnection } = require('./db-conn');
+const { getAccountDetails } = require('./user');
 const { validateUser, validateToken } = require('./validation');
 //  const { getPredictions } = require('./image-predicts');
 
@@ -54,6 +55,7 @@ const patientLoginHandler = async (request, h) => {
 
   if (userValid) {
     const user = { username };
+    const userData = await getAccountDetails(username, 'patients');
 
     const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
     const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET);
@@ -77,6 +79,11 @@ const patientLoginHandler = async (request, h) => {
       status: 'Success',
       message: 'User authenticated',
       data: {
+        username,
+        name: userData.name,
+        phone: userData.phone,
+        email: userData.email,
+        address: userData.address,
         accessToken,
         refreshToken,
       },
@@ -165,6 +172,7 @@ const doctorLoginHandler = async (request, h) => {
 
   if (userValid) {
     const user = { username };
+    const userData = await getAccountDetails(username, 'doctors');
 
     const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
     const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET);
@@ -188,6 +196,11 @@ const doctorLoginHandler = async (request, h) => {
       status: 'Success',
       message: 'User authenticated',
       data: {
+        username,
+        name: userData.name,
+        phone: userData.phone,
+        email: userData.email,
+        address: userData.address,
         accessToken,
         refreshToken,
       },
