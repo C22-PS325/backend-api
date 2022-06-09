@@ -6,7 +6,6 @@ const bcrypt = require('bcrypt');
 const { startConnection } = require('./db-conn');
 const { getAccountDetails } = require('./user');
 const { validateUser, validateToken } = require('./validation');
-//  const { getPredictions } = require('./image-predicts');
 
 const patientRegisterHandler = async (request, h) => {
   const {
@@ -301,16 +300,26 @@ const imagePredictHandler = async (request, h) => {
   const tokenValid = validateToken(token);
 
   if (tokenValid) {
-    const date = Date.now();
+    const body = request.payload;
+    const imageArr = body.images;
     const name = jwt.decode(token).username;
-    const fileName = `${name}-${date}.jpg`;
-    const fileDir = `images/${fileName}`;
-    request.payload.pipe(fs.createWriteStream(fileDir));
+
+    const result = imageArr.map((img) => {
+      let fileDir;
+      setTimeout(() => {
+        const date = Date.now();
+        const fileName = `${name}-${date}`;
+        fileDir = `images/${fileName}.jpg`;
+
+        img.pipe(fs.createWriteStream(fileDir));
+      }, 1);
+      return fileDir;
+    });
 
     const response = h.response({
-      fileDir,
+      result,
     });
-    response.code(200);
+    response.code(201);
     return response;
   }
 
@@ -348,7 +357,7 @@ const audioPredictHandler = (request, h) => {
     const response = h.response({
       fileDir,
     });
-    response.code(200);
+    response.code(201);
     return response;
   }
 

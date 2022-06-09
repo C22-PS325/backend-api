@@ -61,13 +61,14 @@ const routes = [
   {
     method: 'POST',
     path: '/api/images/predict',
-    config: {
+    handler: imagePredictHandler,
+    options: {
       payload: {
-        maxBytes: 209715200,
-        output: 'stream',
         parse: true,
+        allow: ['multipart/form-data', 'image/jpeg'],
+        maxBytes: 500 * 1024,
+        multipart: { output: 'stream' },
       },
-      handler: imagePredictHandler,
     },
   },
   {
@@ -76,8 +77,9 @@ const routes = [
     config: {
       payload: {
         maxBytes: 209715200,
-        output: 'stream',
         parse: true,
+        allow: ['multipart/form-data', 'audio/mp3'],
+        multipart: { output: 'stream' },
       },
       handler: audioPredictHandler,
     },
