@@ -1,11 +1,11 @@
 require('dotenv').config();
 
 const jwt = require('jsonwebtoken');
-const fs = require('fs');
 const bcrypt = require('bcrypt');
 const { startConnection } = require('./db-conn');
 const { getAccountDetails } = require('./user');
-const { validateUser, validateToken } = require('./validation');
+const { validateUser } = require('./validation');
+const { sendAlert } = require('./mailAlert');
 
 const patientRegisterHandler = async (request, h) => {
   const {
@@ -282,91 +282,25 @@ const tokenRefreshHandler = async (request, h) => {
   return response;
 };
 
-const imagePredictHandler = async (request, h) => {
-  //  Authorization Bearer TOKEN
-  const authHeader = request.headers.authorization;
-
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (token === undefined) {
-    const response = h.response({
-      status: 'Forbidden',
-      message: 'No credentials',
-    });
-    response.code(401);
-    return response;
-  }
-
-  const tokenValid = validateToken(token);
-
-  if (tokenValid) {
-    const body = request.payload;
-    const imageArr = body.images;
-    const name = jwt.decode(token).username;
-
-    const result = imageArr.map((img) => {
-      let fileDir;
-      setTimeout(() => {
-        const date = Date.now();
-        const fileName = `${name}-${date}`;
-        fileDir = `images/${fileName}.jpg`;
-
-        img.pipe(fs.createWriteStream(fileDir));
-      }, 1);
-      return fileDir;
-    });
+const alertDoctorsHandler = async (request, h) => {
+  try {
+    const sentStatus = await sendAlert('c2015f1415@bangkit.academy', 'test');
 
     const response = h.response({
-      result,
+      sentStatus,
     });
-    response.code(201);
+
+    response.code(200);
     return response;
-  }
-
-  const response = h.response({
-    status: 'Forbidden',
-    message: 'You don\'t have permission',
-  });
-  response.code(403);
-  return response;
-};
-
-const audioPredictHandler = (request, h) => {
-  const authHeader = request.headers.authorization;
-
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (token === undefined) {
+  } catch (error) {
     const response = h.response({
-      status: 'Forbidden',
-      message: 'No credentials',
+      status: 'Failed',
+      message: 'Something is wrong',
     });
-    response.code(401);
+
+    response.code(500);
     return response;
   }
-
-  const tokenValid = validateToken(token);
-
-  if (tokenValid) {
-    const date = Date.now();
-    const name = jwt.decode(token).username;
-    const fileName = `${name}-${date}.mp3`;
-    const fileDir = `audio/${fileName}`;
-    request.payload.pipe(fs.createWriteStream(fileDir));
-
-    const response = h.response({
-      fileDir,
-    });
-    response.code(201);
-    return response;
-  }
-
-  const response = h.response({
-    status: 'Forbidden',
-    message: 'You don\'t have permission',
-  });
-  response.code(403);
-  return response;
 };
 
 module.exports = {
@@ -377,6 +311,5 @@ module.exports = {
   doctorLoginHandler,
   doctorLogoutHandler,
   tokenRefreshHandler,
-  imagePredictHandler,
-  audioPredictHandler,
+  alertDoctorsHandler,
 };

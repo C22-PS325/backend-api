@@ -4,6 +4,7 @@ async function startConnection() {
   const connection = await mysql.createConnection({
     host: 'localhost',
     user: 'root',
+    password: process.env.DATABASE_PASSWORD,
     database: 'siap_pulih',
   });
 

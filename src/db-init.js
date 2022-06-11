@@ -4,6 +4,7 @@ const initDb = async () => {
   const conn = await mysql.createConnection({
     host: 'localhost',
     user: 'root',
+    password: process.env.DATABASE_PASSWORD,
   });
 
   const query = 'CREATE DATABASE siap_pulih;';

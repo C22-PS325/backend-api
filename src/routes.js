@@ -6,8 +6,7 @@ const {
   doctorLoginHandler,
   doctorLogoutHandler,
   tokenRefreshHandler,
-  imagePredictHandler,
-  audioPredictHandler,
+  alertDoctorsHandler,
 } = require('./handler');
 
 const routes = [
@@ -60,29 +59,8 @@ const routes = [
   },
   {
     method: 'POST',
-    path: '/api/images/predict',
-    handler: imagePredictHandler,
-    options: {
-      payload: {
-        parse: true,
-        allow: ['multipart/form-data', 'image/jpeg'],
-        maxBytes: 500 * 1024,
-        multipart: { output: 'stream' },
-      },
-    },
-  },
-  {
-    method: 'POST',
-    path: '/api/audio/predict',
-    config: {
-      payload: {
-        maxBytes: 209715200,
-        parse: true,
-        allow: ['multipart/form-data', 'audio/mp3'],
-        multipart: { output: 'stream' },
-      },
-      handler: audioPredictHandler,
-    },
+    path: '/api/doctors/alert',
+    handler: alertDoctorsHandler,
   },
 ];
 
