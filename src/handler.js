@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { startConnection } = require('./db-conn');
 const { getAccountDetails } = require('./user');
-const { validateUser } = require('./validation');
+const { validateUser, validateToken } = require('./validation');
 const { sendAlert } = require('./mailAlert');
 
 const patientRegisterHandler = async (request, h) => {
@@ -283,24 +283,48 @@ const tokenRefreshHandler = async (request, h) => {
 };
 
 const alertDoctorsHandler = async (request, h) => {
-  try {
-    const sentStatus = await sendAlert('c2015f1415@bangkit.academy', 'test');
+  const authHeader = request.headers.authorization;
 
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token === undefined) {
     const response = h.response({
-      sentStatus,
+      status: 'Forbidden',
+      message: 'No credentials',
     });
-
-    response.code(200);
-    return response;
-  } catch (error) {
-    const response = h.response({
-      status: 'Failed',
-      message: 'Something is wrong',
-    });
-
-    response.code(500);
+    response.code(401);
     return response;
   }
+
+  const tokenValid = validateToken(token);
+
+  if (tokenValid) {
+    try {
+      const sentStatus = await sendAlert('a7269j2339@bangkit.academy', 'test');
+
+      const response = h.response({
+        sentStatus,
+      });
+
+      response.code(200);
+      return response;
+    } catch (error) {
+      const response = h.response({
+        status: 'Failed',
+        message: 'Something is wrong',
+      });
+
+      response.code(500);
+      return response;
+    }
+  }
+
+  const response = h.response({
+    status: 'Forbidden',
+    message: 'You don\'t have permission',
+  });
+  response.code(403);
+  return response;
 };
 
 module.exports = {
