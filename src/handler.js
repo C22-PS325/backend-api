@@ -56,7 +56,7 @@ const patientLoginHandler = async (request, h) => {
     const user = { username };
     const userData = await getAccountDetails(username, 'patients');
 
-    const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
+    const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '6h' });
     const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET);
 
     try {
@@ -173,7 +173,7 @@ const doctorLoginHandler = async (request, h) => {
     const user = { username };
     const userData = await getAccountDetails(username, 'doctors');
 
-    const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
+    const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '6h' });
     const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET);
 
     try {
@@ -273,7 +273,7 @@ const tokenRefreshHandler = async (request, h) => {
   }
 
   const user = { username: refreshTokenVerified.username };
-  const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
+  const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '6h' });
 
   const response = h.response({
     accessToken,
@@ -300,7 +300,8 @@ const alertDoctorsHandler = async (request, h) => {
 
   if (tokenValid) {
     try {
-      const sentStatus = await sendAlert('a7269j2339@bangkit.academy', 'test');
+      const name = jwt.decode(token).username;
+      const sentStatus = await sendAlert('a7269j2339@bangkit.academy', name);
 
       const response = h.response({
         sentStatus,
